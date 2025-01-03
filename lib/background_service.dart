@@ -53,7 +53,6 @@ void onServiceStart(ServiceInstance service) async {
 
   final int interval = await getTime();
   final Duration duration = Duration(minutes: interval);
-  print(duration);
 
   // Listen for stop service signal
   service.on('stopService').listen((event) {
