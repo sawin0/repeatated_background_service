@@ -21,10 +21,17 @@ Future<void> main() async {
   ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key, required this.isSet});
+class MyApp extends StatefulWidget {
+  MyApp({super.key, required this.isSet});
 
-  final bool isSet;
+  late bool isSet;
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final TextEditingController _controller = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -32,24 +39,37 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
         appBar: AppBar(title: Text('Background Service Example')),
         body: Column(
+          spacing: 10,
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            isSet
+            TextFormField(
+              controller: _controller,
+              decoration: const InputDecoration(
+                labelText: 'Enter Bell Duration in minute(s)',
+              ),
+            ),
+            widget.isSet
                 ? ElevatedButton(
                     onPressed: () {
                       // Stop the background service
+                      widget.isSet = false;
                       storeData(false);
+                      _controller.text = '0';
                       FlutterBackgroundService().invoke('stopService');
+                      setState(() {});
                     },
                     child: Text('Stop Service'))
                 : ElevatedButton(
                     onPressed: () {
                       // Stop the background service
+                      widget.isSet = true;
                       storeData(true);
+                      storeTime();
                       FlutterBackgroundService().startService();
+                      setState(() {});
                     },
                     child: Text('Start Service')),
-            isSet
+            widget.isSet
                 ? const Center(
                     child: Text('Service is running in the background'))
                 : const Center(
@@ -59,14 +79,28 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
+
+  void storeData(bool isSet) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setBool('bell', isSet);
+  }
+
+  void storeTime() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    await prefs.setInt('time', int.tryParse(_controller.text) ?? 0);
+  }
 }
 
-void storeData(bool isSet) async {
+@pragma('vm:entry-point')
+Future<int> getTime() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
 
-  await prefs.setBool('bell', isSet);
+  return prefs.getInt('time') ?? 0;
 }
 
+@pragma('vm:entry-point')
 Future<bool> getData() async {
   final SharedPreferences prefs = await SharedPreferences.getInstance();
 

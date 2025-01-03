@@ -24,7 +24,7 @@ Future<void> initializeService() async {
     androidConfiguration: AndroidConfiguration(
       onStart: onServiceStart,
       autoStart: isSet,
-      isForegroundMode: false,
+      isForegroundMode: true,
       autoStartOnBoot: true,
       initialNotificationTitle: 'Background Service',
       initialNotificationContent: 'Service is running',
@@ -51,19 +51,23 @@ void onServiceStart(ServiceInstance service) async {
     const AudioSessionConfiguration.speech(),
   );
 
+  final int interval = await getTime();
+  final Duration duration = Duration(minutes: interval);
+  print(duration);
+
   // Listen for stop service signal
   service.on('stopService').listen((event) {
     service.stopSelf();
   });
 
-  Timer.periodic(const Duration(seconds: 15), (timer) async {
+  Timer.periodic(duration, (timer) async {
     // Play sound in the background
     await playSound();
     NotificationService.scheduleNotification(
         id: 1,
         title: 'Background Service',
         body: 'Service is running',
-        scheduledDate: DateTime.now().add(const Duration(seconds: 15)));
+        scheduledDate: DateTime.now().add(duration));
   });
 }
 
